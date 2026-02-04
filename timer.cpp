@@ -2,6 +2,7 @@
 #include <chrono>
 #include <vector>
 #include <sstream>
+#include <thread>
 #include <algorithm>
 
 double validInterval(const char* arg) {
@@ -28,41 +29,39 @@ int main(int argc, char* argv[]) {
         std::cerr << "usage: timer <seconds>\n";
         return 1;
     }
-    double interval = validInterval(argv[1]);
+    double intervalSec = validInterval(argv[1]);
+    auto interval = std::chrono::nanoseconds(static_cast<long long>(intervalSec * 1e9));
+
+    auto last_tp = std::chrono::system_clock::now();
 
     std::vector<double> timestampsInterval;
-    
-    int counter = 1;
-    
-    auto timer = std::chrono::high_resolution_clock::now();
+    auto next_heartbeat = std::chrono::time_point_cast<
+        std::chrono::nanoseconds>(last_tp);
 
-    auto duration = timer.time_since_epoch();
+    auto get_ms = [](std::chrono::system_clock::time_point tp) {
+        return std::chrono::duration_cast<std::chrono::milliseconds>(
+            tp.time_since_epoch()
+        ).count();
+    };
+    
+    std::cout << "Start Timestamp:" << get_ms(last_tp) << "\n";
+    
+    for (int i = 0; i < 100; ++i) {
+        next_heartbeat += interval;
 
-    auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
-    
-    std::cout << "Timestamp:" << milliseconds << "\n";
-    
-    while (counter <= 101) {
+        std::this_thread::sleep_until(next_heartbeat);
         
-        auto current = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> delta = current - timer;
-        
-        // count use second
-        if (delta.count() >= interval) {
-            counter++;
+        auto now_tp = std::chrono::system_clock::now();
 
-            // use milliseconds
-            timestampsInterval.push_back(delta.count() * 1000);
-            
-            timer = current;
-            duration = timer.time_since_epoch();
-            milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
-            std::cout << "Timestamp:" << milliseconds << "\n";
-        }
+        std::chrono::duration<double, std::milli> diff = now_tp - last_tp;
+        timestampsInterval.push_back(diff.count());
+        last_tp = now_tp;
+
+        std::cout << "Timestamp:" << get_ms(now_tp) << "\t" <<
+            "(real interval: " << diff.count() << " ms)\n";
     }
 
     // process timestampsInterval
-
     std::cout << "Intervals average (ms): ";
     double sum = 0.0;
     for (const auto& t : timestampsInterval) {
