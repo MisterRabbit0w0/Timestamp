@@ -36,7 +36,7 @@ cd ..
 
 ```bash
 git clone https://github.com/MisterRabbit0w0/Timestamp && cd Timestamp
-g++ -std=c++11 timer.cpp -o timer
+g++ -std=c++11 -I./include src/main.cpp src/timer.cpp -o timer
 ```
 
 ## Run
