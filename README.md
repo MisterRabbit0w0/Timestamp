@@ -29,6 +29,7 @@ git clone https://github.com/MisterRabbit0w0/Timestamp && cd Timestamp
 mkdir build && cd build
 cmake ..
 cmake --build .
+cd ..
 ```
 
 ### Option 2: Using g++
