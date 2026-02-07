@@ -44,7 +44,11 @@ std::string Logger::generateFilename() {
     auto now = std::chrono::system_clock::now();
     std::time_t t = std::chrono::system_clock::to_time_t(now);
     std::tm bt{};
+#ifdef _WIN32
     localtime_s(&bt, &t);
+#else
+    localtime_r(&t, &bt);
+#endif
     std::ostringstream oss;
     oss << "log_" << std::put_time(&bt, "%Y-%m-%d_%H-%M-%S") << ".log";
     return oss.str();
