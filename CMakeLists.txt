@@ -4,4 +4,4 @@ PROJECT(TimestampProject)
 
 SET(CMAKE_CXX_STANDARD 11)
 
-ADD_EXECUTABLE(Timestamp timer.cpp)
+ADD_EXECUTABLE(timer timer.cpp)
