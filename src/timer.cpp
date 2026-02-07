@@ -23,9 +23,13 @@ void Timer::run(std::size_t iterations) {
 
     auto nextHeartbeat = std::chrono::time_point_cast<std::chrono::nanoseconds>(lastTimePoint_);
 
+    auto awakeBeforeHeartbeat = std::chrono::nanoseconds(10000000); // 10 ms
+
     for (std::size_t i = 0; i < iterations; ++i) {
         nextHeartbeat += interval_;
-        std::this_thread::sleep_until(nextHeartbeat);
+        std::this_thread::sleep_until(nextHeartbeat - awakeBeforeHeartbeat);
+
+        while(std::chrono::system_clock::now() < nextHeartbeat) {}
         
         auto nowTp = std::chrono::system_clock::now();
         std::chrono::duration<double, std::milli> diff = nowTp - lastTimePoint_;
