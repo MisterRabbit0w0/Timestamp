@@ -1,4 +1,5 @@
 #include "timer.hpp"
+#include "logger.hpp"
 
 #include <iostream>
 #include <thread>

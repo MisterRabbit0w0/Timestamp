@@ -1,4 +1,5 @@
 #include "timer.hpp"
+#include "logger.hpp"
 
 #include <iostream>
 #include <iomanip>
@@ -17,8 +18,8 @@ void printUsage(const char* programName) {
  * @brief Print timing statistics in formatted output
  */
 void printStatistics(const ts::TimingStats& stats) {
-    std::cout << std::fixed << std::setprecision(2);
-    std::cout << "\n========== Timing Statistics ==========\n"
+    logger << std::fixed << std::setprecision(2);
+    logger << "\n========== Timing Statistics ==========\n"
               << "Intervals average (ms): " << stats.average << "\n"
               << "Intervals 50th Percentile (ms): " << stats.p50 << "\n"
               << "Intervals 75th Percentile (ms): " << stats.p75 << "\n"

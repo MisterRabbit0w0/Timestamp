@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 
 PROJECT(TimestampProject)
 
-SET(CMAKE_CXX_STANDARD 11)
+SET(CMAKE_CXX_STANDARD 17)
 SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Set output directory to project root for all platforms and configurations
@@ -19,6 +19,7 @@ INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include)
 SET(SOURCES
     src/main.cpp
     src/timer.cpp
+    src/logger.cpp
 )
 
 # Create executable
