@@ -42,6 +42,8 @@ int main(int argc, char* argv[]) {
         timer.run();
         
         ts::TimingStats stats = timer.calculateStatistics();
+
+        logger << "interval = " << intervalSec << " s\n";
         printStatistics(stats);
         
         return 0;
