@@ -13,15 +13,25 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Install build essentials and ninja
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential ninja-build
+
     - name: Set up CMake
-      uses: cmake/setup-cmake@v3
+      uses: jwlawson/actions-setup-cmake@v2
+      with:
+        cmake-version: 'latest'
 
     - name: Configure
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release
+      run: |
+        cmake -S . -B build \
+        -DCMAKE_BUILD_TYPE=Release \
+        -G 'Ninja'
 
     - name: Build
-      run: cmake --build ${{github.workspace}}/build --config Release
+      run: cmake --build build -j$(nproc)
 
     - name: Test
-      working-directory: ${{github.workspace}}/build
-      run: ctest --output-on-failure
+      working-directory: build
+      run: ctest --output-on-failure -j$(nproc)
