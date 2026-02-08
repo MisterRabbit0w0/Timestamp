@@ -106,5 +106,6 @@ void HighResTimer::printStatistics(const ::utils::TimingStats& stats) const {
            << "Intervals 95th Percentile (us): " << stats.p95 << "\n"
            << "Intervals 99th Percentile (us): " << stats.p99 << "\n"
            << "========================================\n";
+}
 
 }  // namespace ts
