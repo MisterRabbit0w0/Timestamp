@@ -4,6 +4,7 @@
 
 #include "high_res_timer.hpp"
 #include "logger.hpp"
+#include "timer.hpp"
 
 /**
  * @brief Print usage information
@@ -17,21 +18,6 @@ void printUsage(const char* programName) {
         << "         " << programName << " 0.0001 # 100us interval\n";
 }
 
-/**
- * @brief Print timing statistics in formatted output
- */
-void printStatistics(const ::utils::TimingStats& stats) {
-    logger << std::fixed << std::setprecision(2);
-    logger << "\n========== Timing Statistics ==========\n"
-           << "Intervals average (us): " << stats.average << "\n"
-           << "Intervals 50th Percentile (us): " << stats.p50 << "\n"
-           << "Intervals 75th Percentile (us): " << stats.p75 << "\n"
-           << "Intervals 90th Percentile (us): " << stats.p90 << "\n"
-           << "Intervals 95th Percentile (us): " << stats.p95 << "\n"
-           << "Intervals 99th Percentile (us): " << stats.p99 << "\n"
-           << "========================================\n";
-}
-
 int main(int argc, char* argv[]) {
     try {
         if (argc != 2) {
@@ -41,13 +27,23 @@ int main(int argc, char* argv[]) {
 
         double intervalSec = ::utils::parseInterval(argv[1]);
 
-        ts::HighResTimer timer(intervalSec);
-        timer.run();
+        if (intervalSec < 0.001) {  // 1 ms threshold for high-resolution timer
+            ts::HighResTimer timer(intervalSec);
+            timer.run();
 
-        ::utils::TimingStats stats = timer.calculateStatistics();
+            ::utils::TimingStats stats = timer.calculateStatistics();
 
-        logger << "interval = " << intervalSec << " s\n";
-        printStatistics(stats);
+            logger << "interval = " << intervalSec << " s\n";
+            timer.printStatistics(stats);
+        } else {
+            ts::Timer timer(intervalSec);
+            timer.run();
+
+            ::utils::TimingStats stats = timer.calculateStatistics();
+
+            logger << "interval = " << intervalSec << " s\n";
+            timer.printStatistics(stats);
+        }
 
         return 0;
 

@@ -1,6 +1,7 @@
 #include "timer.hpp"
 
 #include <algorithm>
+#include <iomanip>
 #include <iostream>
 #include <numeric>
 #include <sstream>
@@ -80,6 +81,18 @@ void Timer::printTimestamp(const std::chrono::system_clock::time_point& tp,
                            double realInterval) {
     std::cout << "Timestamp:" << ::utils::toMilliseconds(tp) << "\t"
               << "(real interval: " << realInterval << " ms)\n";
+}
+
+void Timer::printStatistics(const ::utils::TimingStats& stats) const {
+    logger << std::fixed << std::setprecision(2);
+    logger << "\n========== Timing Statistics ==========\n"
+           << "Intervals average (ms): " << stats.average << "\n"
+           << "Intervals 50th Percentile (ms): " << stats.p50 << "\n"
+           << "Intervals 75th Percentile (ms): " << stats.p75 << "\n"
+           << "Intervals 90th Percentile (ms): " << stats.p90 << "\n"
+           << "Intervals 95th Percentile (ms): " << stats.p95 << "\n"
+           << "Intervals 99th Percentile (ms): " << stats.p99 << "\n"
+           << "========================================\n";
 }
 
 }  // namespace ts

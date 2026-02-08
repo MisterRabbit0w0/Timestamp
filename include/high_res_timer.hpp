@@ -48,6 +48,12 @@ public:
         return intervalSec_;
     }
 
+    /**
+     * @brief Print timing statistics to console
+     * @param stats TimingStats structure with calculated percentiles
+     */
+    void printStatistics(const ::utils::TimingStats& stats) const;
+
 private:
     double intervalSec_;
     std::chrono::nanoseconds interval_;

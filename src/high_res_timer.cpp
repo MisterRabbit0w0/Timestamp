@@ -1,12 +1,14 @@
 #include "high_res_timer.hpp"
 
 #include <algorithm>
+#include <iomanip>
 #include <iostream>
 #include <numeric>
 #include <sstream>
 #include <stdexcept>
 #include <thread>
 
+#include "logger.hpp"
 #include "utils.hpp"
 
 namespace ts {
@@ -93,5 +95,16 @@ void HighResTimer::printTimestamp(double realInterval) {
     std::cout << "Timestamp (us):" << ::utils::toMicroseconds(now()) << "\t"
               << "(real interval: " << realInterval << " us)\n";
 }
+
+void HighResTimer::printStatistics(const ::utils::TimingStats& stats) const {
+    logger << std::fixed << std::setprecision(2);
+    logger << "\n========== Timing Statistics ==========\n"
+           << "Intervals average (us): " << stats.average << "\n"
+           << "Intervals 50th Percentile (us): " << stats.p50 << "\n"
+           << "Intervals 75th Percentile (us): " << stats.p75 << "\n"
+           << "Intervals 90th Percentile (us): " << stats.p90 << "\n"
+           << "Intervals 95th Percentile (us): " << stats.p95 << "\n"
+           << "Intervals 99th Percentile (us): " << stats.p99 << "\n"
+           << "========================================\n";
 
 }  // namespace ts

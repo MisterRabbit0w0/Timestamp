@@ -34,6 +34,12 @@ public:
     }
 
     /**
+     * @brief Print timing statistics to console
+     * @param stats TimingStats structure with calculated percentiles
+     */
+    void printStatistics(const ::utils::TimingStats& stats) const;
+
+    /**
      * @brief Calculate statistics from collected intervals
      * @return TimingStats structure with calculated percentiles
      */
