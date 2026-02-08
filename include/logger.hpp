@@ -1,7 +1,7 @@
 #pragma once
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <string>
 
 namespace Logger {
@@ -21,7 +21,7 @@ public:
      * @brief Log a value to both console and file
      * @param value The value to log
      */
-    template<typename T>
+    template <typename T>
     Logger& operator<<(const T& value) {
         std::cout << value;
         if (logFileOpened && file.is_open()) {
@@ -43,7 +43,8 @@ public:
     }
 
     /**
-     * @brief Log ios_base manipulators (e.g., std::fixed) to both console and file
+     * @brief Log ios_base manipulators (e.g., std::fixed) to both console and
+     * file
      * @param manip The ios_base manipulator function
      */
     Logger& operator<<(std::ios_base& (*manip)(std::ios_base&)) {
@@ -58,7 +59,7 @@ private:
     std::ofstream file;
 
     bool logFileOpened = false;
-    
+
     std::string generateFilename();
 
     bool checkFolderExists(const std::string& folderPath);
@@ -70,6 +71,6 @@ private:
     void createLogFile(const std::string& filePath);
 };
 
-} // namespace Logger
+}  // namespace Logger
 
 extern Logger::Logger logger;

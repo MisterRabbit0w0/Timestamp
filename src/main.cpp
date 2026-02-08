@@ -1,32 +1,35 @@
-#include "timer.hpp"
-#include "logger.hpp"
-
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 #include <stdexcept>
+
+#include "high_res_timer.hpp"
+#include "logger.hpp"
 
 /**
  * @brief Print usage information
  */
 void printUsage(const char* programName) {
-    std::cerr << "Usage: " << programName << " <seconds>\n"
-              << "  seconds: Target interval duration in seconds (positive number)\n"
-              << "Example: " << programName << " 1.0\n";
+    std::cerr
+        << "Usage: " << programName << " <seconds>\n"
+        << "  seconds: Target interval duration in seconds (positive number, "
+           "supports sub-millisecond)\n"
+        << "Example: " << programName << " 0.001  # 1ms interval\n"
+        << "         " << programName << " 0.0001 # 100us interval\n";
 }
 
 /**
  * @brief Print timing statistics in formatted output
  */
-void printStatistics(const ts::TimingStats& stats) {
+void printStatistics(const ::utils::TimingStats& stats) {
     logger << std::fixed << std::setprecision(2);
     logger << "\n========== Timing Statistics ==========\n"
-              << "Intervals average (ms): " << stats.average << "\n"
-              << "Intervals 50th Percentile (ms): " << stats.p50 << "\n"
-              << "Intervals 75th Percentile (ms): " << stats.p75 << "\n"
-              << "Intervals 90th Percentile (ms): " << stats.p90 << "\n"
-              << "Intervals 95th Percentile (ms): " << stats.p95 << "\n"
-              << "Intervals 99th Percentile (ms): " << stats.p99 << "\n"
-              << "========================================\n";
+           << "Intervals average (us): " << stats.average << "\n"
+           << "Intervals 50th Percentile (us): " << stats.p50 << "\n"
+           << "Intervals 75th Percentile (us): " << stats.p75 << "\n"
+           << "Intervals 90th Percentile (us): " << stats.p90 << "\n"
+           << "Intervals 95th Percentile (us): " << stats.p95 << "\n"
+           << "Intervals 99th Percentile (us): " << stats.p99 << "\n"
+           << "========================================\n";
 }
 
 int main(int argc, char* argv[]) {
@@ -36,18 +39,18 @@ int main(int argc, char* argv[]) {
             return 1;
         }
 
-        double intervalSec = ts::utils::parseInterval(argv[1]);
-        
-        ts::Timer timer(intervalSec);
+        double intervalSec = ::utils::parseInterval(argv[1]);
+
+        ts::HighResTimer timer(intervalSec);
         timer.run();
-        
-        ts::TimingStats stats = timer.calculateStatistics();
+
+        ::utils::TimingStats stats = timer.calculateStatistics();
 
         logger << "interval = " << intervalSec << " s\n";
         printStatistics(stats);
-        
+
         return 0;
-        
+
     } catch (const std::invalid_argument& e) {
         std::cerr << "Error: " << e.what() << "\n";
         printUsage(argv[0]);

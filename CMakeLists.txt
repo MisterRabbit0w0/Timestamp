@@ -19,6 +19,8 @@ INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include)
 SET(SOURCES
     src/main.cpp
     src/timer.cpp
+    src/high_res_timer.cpp
+    src/utils.cpp
     src/logger.cpp
 )
 

@@ -1,0 +1,24 @@
+# 基于 Google 风格进行微调
+BasedOnStyle: Google
+
+# 缩进宽度设置为 4
+IndentWidth: 4
+ColumnLimit: 80 # 超过 80 字符自动换行，你也可以改为 100 或 120
+
+# 大括号换行策略
+BreakBeforeBraces: Attach # 所有大括号都紧跟在语句后面，不换行
+
+# 针对不同场景的微调
+AllowShortBlocksOnASingleLine: false    # 即使是很短的代码块也不放在同一行
+AllowShortFunctionsOnASingleLine: Empty # 只有空函数可以写在同一行
+AllowShortIfStatementsOnASingleLine: false # if 语句即便很短也要换行
+
+# 连续赋值或注释对齐（可选，增加美观度）
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: false
+
+# 指针对齐方式（左对齐: int* p; 右对齐: int *p;）
+PointerAlignment: Left
+
+# 访问修饰符（public/private）的缩进
+AccessModifierOffset: -4

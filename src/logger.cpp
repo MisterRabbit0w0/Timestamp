@@ -1,18 +1,17 @@
 #include "logger.hpp"
 
-#include <iostream>
-#include <fstream>
 #include <chrono>
-#include <sstream>
-#include <iomanip>
 #include <ctime>
 #include <filesystem>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
 #include <stdexcept>
 
 namespace Logger {
 
 Logger::Logger(const std::string& folderPath = "logs") {
-
     if (!checkFolderExists(folderPath)) {
         createFolder(folderPath);
     }
@@ -25,13 +24,12 @@ Logger::Logger(const std::string& folderPath = "logs") {
     }
 
     createLogFile(fullPath);
-    
+
     file.open(fullPath, std::ios::out);
     if (!file.is_open()) {
         throw std::runtime_error("Failed to open log file: " + fullPath);
     }
     logFileOpened = true;
-
 }
 
 Logger::~Logger() {
@@ -41,7 +39,7 @@ Logger::~Logger() {
 }
 
 std::string Logger::generateFilename() {
-    auto now = std::chrono::system_clock::now();
+    auto now      = std::chrono::system_clock::now();
     std::time_t t = std::chrono::system_clock::to_time_t(now);
     std::tm bt{};
 #ifdef _WIN32
@@ -62,7 +60,8 @@ void Logger::createFolder(const std::string& folderPath) {
     try {
         std::filesystem::create_directories(folderPath);
     } catch (const std::filesystem::filesystem_error& e) {
-        throw std::runtime_error("Failed to create log folder: " + folderPath + " - " + e.what());
+        throw std::runtime_error("Failed to create log folder: " + folderPath +
+                                 " - " + e.what());
     }
 }
 
@@ -78,6 +77,6 @@ void Logger::createLogFile(const std::string& filePath) {
     ofs.close();
 }
 
-} // namespace Logger
+}  // namespace Logger
 
 Logger::Logger logger;
