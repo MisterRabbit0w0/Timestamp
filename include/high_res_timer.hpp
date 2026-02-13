@@ -1,7 +1,11 @@
 #pragma once
 
 #include <chrono>
+#include <condition_variable>
+#include <mutex>
+#include <queue>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "utils.hpp"
@@ -19,6 +23,11 @@ public:
      * @param intervalSec Target interval in seconds (supports sub-millisecond)
      */
     explicit HighResTimer(double intervalSec);
+
+    /**
+     * @brief Destructor - stops output thread if running
+     */
+    ~HighResTimer();
 
     /**
      * @brief Run the timing loop for specified number of iterations
@@ -60,6 +69,13 @@ private:
     std::vector<double> intervals_;
     std::chrono::steady_clock::time_point lastTimePoint_;
 
+    // Output thread and thread-safe queue
+    std::thread outputThread_;
+    std::queue<std::string> outputQueue_;
+    std::mutex queueMutex_;
+    std::condition_variable queueCV_;
+    bool stopOutputThread_;
+
     /**
      * @brief Get current time with highest available resolution
      * @return Time point with microsecond precision
@@ -67,6 +83,7 @@ private:
     std::chrono::steady_clock::time_point now() const;
 
     void printTimestamp(double realInterval);
+    void outputWorker();
 };
 
 }  // namespace ts

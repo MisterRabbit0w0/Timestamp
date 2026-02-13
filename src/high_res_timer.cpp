@@ -3,7 +3,9 @@
 #include <algorithm>
 #include <iomanip>
 #include <iostream>
+#include <mutex>
 #include <numeric>
+#include <queue>
 #include <sstream>
 #include <stdexcept>
 #include <thread>
@@ -17,8 +19,21 @@ HighResTimer::HighResTimer(double intervalSec)
     : intervalSec_(intervalSec),
       interval_(
           std::chrono::nanoseconds(static_cast<long long>(intervalSec * 1e9))),
-      intervals_() {
+      intervals_(),
+      stopOutputThread_(false) {
     intervals_.reserve(100);
+}
+
+HighResTimer::~HighResTimer() {
+    // Signal the output thread to stop and wait for it
+    {
+        std::lock_guard<std::mutex> lock(queueMutex_);
+        stopOutputThread_ = true;
+    }
+    queueCV_.notify_all();
+    if (outputThread_.joinable()) {
+        outputThread_.join();
+    }
 }
 
 std::chrono::steady_clock::time_point HighResTimer::now() const {
@@ -26,20 +41,22 @@ std::chrono::steady_clock::time_point HighResTimer::now() const {
 }
 
 void HighResTimer::run(std::size_t iterations) {
+    // Start the output worker thread
+    stopOutputThread_ = false;
+    outputThread_     = std::thread(&HighResTimer::outputWorker, this);
+
     lastTimePoint_ = now();
 
     std::cout << "Start Timestamp (us):"
               << ::utils::toMicroseconds(lastTimePoint_) << "\n";
 
+    // not use heartbeat approach for sub-millisecond intervals, instead use
+    // busy-wait loop
     auto nextHeartbeat =
         std::chrono::time_point_cast<std::chrono::nanoseconds>(lastTimePoint_);
 
-    auto awakeBeforeHeartbeat = std::chrono::nanoseconds(
-        1000000);  // 1 ms (reduced for higher precision)
-
     for (std::size_t i = 0; i < iterations; ++i) {
         nextHeartbeat += interval_;
-        std::this_thread::sleep_until(nextHeartbeat - awakeBeforeHeartbeat);
 
         // Busy-wait loop for higher precision on sub-millisecond intervals
         while (now() < nextHeartbeat) {
@@ -53,8 +70,20 @@ void HighResTimer::run(std::size_t iterations) {
 
         intervals_.push_back(realInterval);
 
+        // use another thread to print timestamp to avoid affecting timing
+        // accuracy
         printTimestamp(realInterval);
         lastTimePoint_ = nowTp;
+    }
+
+    // Signal the output thread to stop and wait for it to finish
+    {
+        std::lock_guard<std::mutex> lock(queueMutex_);
+        stopOutputThread_ = true;
+    }
+    queueCV_.notify_all();
+    if (outputThread_.joinable()) {
+        outputThread_.join();
     }
 }
 
@@ -92,8 +121,43 @@ void HighResTimer::run(std::size_t iterations) {
 }
 
 void HighResTimer::printTimestamp(double realInterval) {
-    std::cout << "Timestamp (us):" << ::utils::toMicroseconds(now()) << "\t"
-              << "(real interval: " << realInterval << " us)\n";
+    // Create the output string and push to queue for async printing
+    std::ostringstream oss;
+    oss << "Timestamp (us):" << ::utils::toMicroseconds(now()) << "\t"
+        << "(real interval: " << realInterval << " us)\n";
+
+    {
+        std::lock_guard<std::mutex> lock(queueMutex_);
+        outputQueue_.push(oss.str());
+    }
+    queueCV_.notify_one();
+}
+
+void HighResTimer::outputWorker() {
+    while (true) {
+        std::string output;
+        {
+            std::unique_lock<std::mutex> lock(queueMutex_);
+            queueCV_.wait(lock, [this] {
+                return !outputQueue_.empty() || stopOutputThread_;
+            });
+
+            // Exit if stopped and queue is empty
+            if (stopOutputThread_ && outputQueue_.empty()) {
+                break;
+            }
+
+            if (!outputQueue_.empty()) {
+                output = outputQueue_.front();
+                outputQueue_.pop();
+            }
+        }
+
+        // Print outside the lock
+        if (!output.empty()) {
+            std::cout << output;
+        }
+    }
 }
 
 void HighResTimer::printStatistics(const ::utils::TimingStats& stats) const {
