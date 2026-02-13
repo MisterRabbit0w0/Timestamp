@@ -82,7 +82,13 @@ void HighResTimer::run(std::size_t iterations) {
     // Request 1ms timer resolution on Windows to improve scheduling precision
     TimerResolutionGuard timerGuard(1);
     // Set current thread to high priority to reduce preemption
-    SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
+    BOOL result =
+        SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
+    if (!result) {
+        // Log warning but continue execution
+        std::cerr << "Warning: Failed to set thread priority to highest. "
+                  << "Timing precision may be affected.\n";
+    }
 #endif
 
     // Start the output worker thread
@@ -139,7 +145,11 @@ void HighResTimer::run(std::size_t iterations) {
 #ifdef _WIN32
     // Restore thread priority (timer resolution is automatically restored by
     // TimerResolutionGuard)
-    SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_NORMAL);
+    BOOL restoreResult =
+        SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_NORMAL);
+    if (!restoreResult) {
+        std::cerr << "Warning: Failed to restore thread priority to normal.\n";
+    }
 #endif
 }
 
