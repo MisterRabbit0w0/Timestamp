@@ -16,11 +16,20 @@ Logger::Logger(const std::string& folderPath = "logs") {
         createFolder(folderPath);
     }
 
-    std::string filename = generateFilename();
+    std::string filename = generateFilenameWithoutExtension();
     std::string fullPath = folderPath + "/" + filename;
 
-    if (checkFileExists(fullPath)) {
-        throw std::runtime_error("Log file already exists: " + fullPath);
+    if (checkFileExists(fullPath + ".log")) {
+        // throw std::runtime_error("Log file already exists: " + fullPath);
+        int i = 1;
+
+        while (checkFileExists(fullPath + "_" + std::to_string(i) + ".log")) {
+            ++i;
+        }
+
+        std::string newFullPath = fullPath + "_" + std::to_string(i) + ".log";
+        createLogFile(newFullPath);
+        fullPath = newFullPath;
     }
 
     createLogFile(fullPath);
@@ -38,7 +47,7 @@ Logger::~Logger() {
     }
 }
 
-std::string Logger::generateFilename() {
+std::string Logger::generateFilenameWithoutExtension() {
     auto now      = std::chrono::system_clock::now();
     std::time_t t = std::chrono::system_clock::to_time_t(now);
     std::tm bt{};
@@ -48,7 +57,7 @@ std::string Logger::generateFilename() {
     localtime_r(&t, &bt);
 #endif
     std::ostringstream oss;
-    oss << "log_" << std::put_time(&bt, "%Y-%m-%d_%H-%M-%S") << ".log";
+    oss << "log_" << std::put_time(&bt, "%Y-%m-%d_%H-%M-%S");
     return oss.str();
 }
 

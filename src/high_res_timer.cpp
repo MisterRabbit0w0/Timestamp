@@ -10,6 +10,40 @@
 #include <stdexcept>
 #include <thread>
 
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+
+#include <windows.h>
+
+#include <mmsystem.h>
+
+namespace {
+
+// RAII wrapper for timeBeginPeriod/timeEndPeriod to ensure cleanup
+class TimerResolutionGuard {
+public:
+    explicit TimerResolutionGuard(UINT period) : period_(period) {
+        timeBeginPeriod(period_);
+    }
+
+    ~TimerResolutionGuard() {
+        timeEndPeriod(period_);
+    }
+
+    // Disable copying
+    TimerResolutionGuard(const TimerResolutionGuard&)            = delete;
+    TimerResolutionGuard& operator=(const TimerResolutionGuard&) = delete;
+
+private:
+    UINT period_;
+};
+
+}  // anonymous namespace
+
+#endif
+
 #include "logger.hpp"
 #include "utils.hpp"
 
@@ -41,27 +75,43 @@ std::chrono::steady_clock::time_point HighResTimer::now() const {
 }
 
 void HighResTimer::run(std::size_t iterations) {
+    intervals_.clear();
+    intervals_.reserve(iterations);
+
+#ifdef _WIN32
+    // Request 1ms timer resolution on Windows to improve scheduling precision
+    TimerResolutionGuard timerGuard(1);
+    // Set current thread to high priority to reduce preemption
+    SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
+#endif
+
     // Start the output worker thread
     stopOutputThread_ = false;
     outputThread_     = std::thread(&HighResTimer::outputWorker, this);
 
-    lastTimePoint_ = now();
+    // Warm up to stabilize CPU frequency and cache
+    for (int i = 0; i < 1000; ++i) {
+        now();
+    }
 
-    std::cout << "Start Timestamp (us):"
-              << ::utils::toMicroseconds(lastTimePoint_) << "\n";
+    lastTimePoint_     = now();
+    auto nextHeartbeat = lastTimePoint_;
 
-    // not use heartbeat approach for sub-millisecond intervals, instead use
-    // busy-wait loop
-    auto nextHeartbeat =
-        std::chrono::time_point_cast<std::chrono::nanoseconds>(lastTimePoint_);
+    // Initial output before starting the timed loop to avoid affecting the
+    // first interval
+    {
+        // use a special value
+        std::lock_guard<std::mutex> lock(queueMutex_);
+        outputQueue_.push({::utils::toMicroseconds(lastTimePoint_), -1.0});
+    }
 
     for (std::size_t i = 0; i < iterations; ++i) {
         nextHeartbeat += interval_;
 
         // Busy-wait loop for higher precision on sub-millisecond intervals
         while (now() < nextHeartbeat) {
-            // Yield to reduce CPU usage while waiting
-            std::this_thread::yield();
+            // No yield for high precision sub-millisecond timing to avoid OS
+            // scheduling latency
         }
 
         auto nowTp          = now();
@@ -72,7 +122,7 @@ void HighResTimer::run(std::size_t iterations) {
 
         // use another thread to print timestamp to avoid affecting timing
         // accuracy
-        printTimestamp(realInterval);
+        printTimestamp(::utils::toMicroseconds(nowTp), realInterval);
         lastTimePoint_ = nowTp;
     }
 
@@ -85,6 +135,12 @@ void HighResTimer::run(std::size_t iterations) {
     if (outputThread_.joinable()) {
         outputThread_.join();
     }
+
+#ifdef _WIN32
+    // Restore thread priority (timer resolution is automatically restored by
+    // TimerResolutionGuard)
+    SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_NORMAL);
+#endif
 }
 
 ::utils::TimingStats HighResTimer::calculateStatistics() const {
@@ -120,22 +176,19 @@ void HighResTimer::run(std::size_t iterations) {
     return stats;
 }
 
-void HighResTimer::printTimestamp(double realInterval) {
-    // Create the output string and push to queue for async printing
-    std::ostringstream oss;
-    oss << "Timestamp (us):" << ::utils::toMicroseconds(now()) << "\t"
-        << "(real interval: " << realInterval << " us)\n";
-
+void HighResTimer::printTimestamp(long long timestampUs,
+                                  double realIntervalUs) {
     {
         std::lock_guard<std::mutex> lock(queueMutex_);
-        outputQueue_.push(oss.str());
+        outputQueue_.push({timestampUs, realIntervalUs});
     }
     queueCV_.notify_one();
 }
 
 void HighResTimer::outputWorker() {
     while (true) {
-        std::string output;
+        OutputData data;
+        bool hasData = false;
         {
             std::unique_lock<std::mutex> lock(queueMutex_);
             queueCV_.wait(lock, [this] {
@@ -148,14 +201,22 @@ void HighResTimer::outputWorker() {
             }
 
             if (!outputQueue_.empty()) {
-                output = outputQueue_.front();
+                data    = outputQueue_.front();
+                hasData = true;
                 outputQueue_.pop();
             }
         }
 
         // Print outside the lock
-        if (!output.empty()) {
-            std::cout << output;
+        if (hasData) {
+            if (data.realIntervalUs != -1.0) {
+                std::cout << "Timestamp (us):" << data.timestampUs << "\t"
+                          << "(real interval: " << data.realIntervalUs
+                          << " us)\n";
+            } else {
+                std::cout << "Start Timestamp (us):" << data.timestampUs
+                          << "\n";
+            }
         }
     }
 }

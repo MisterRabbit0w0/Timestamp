@@ -60,7 +60,7 @@ private:
 
     bool logFileOpened = false;
 
-    std::string generateFilename();
+    std::string generateFilenameWithoutExtension();
 
     bool checkFolderExists(const std::string& folderPath);
 

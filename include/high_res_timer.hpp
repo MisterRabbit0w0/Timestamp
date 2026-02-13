@@ -64,6 +64,11 @@ public:
     void printStatistics(const ::utils::TimingStats& stats) const;
 
 private:
+    struct OutputData {
+        long long timestampUs;
+        double realIntervalUs;
+    };
+
     double intervalSec_;
     std::chrono::nanoseconds interval_;
     std::vector<double> intervals_;
@@ -71,7 +76,7 @@ private:
 
     // Output thread and thread-safe queue
     std::thread outputThread_;
-    std::queue<std::string> outputQueue_;
+    std::queue<OutputData> outputQueue_;
     std::mutex queueMutex_;
     std::condition_variable queueCV_;
     bool stopOutputThread_;
@@ -82,7 +87,7 @@ private:
      */
     std::chrono::steady_clock::time_point now() const;
 
-    void printTimestamp(double realInterval);
+    void printTimestamp(long long timestampUs, double realIntervalUs);
     void outputWorker();
 };
 

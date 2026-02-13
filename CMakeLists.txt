@@ -27,6 +27,11 @@ SET(SOURCES
 # Create executable
 ADD_EXECUTABLE(timer ${SOURCES})
 
+# Link winmm on Windows for timeBeginPeriod
+IF(WIN32)
+    TARGET_LINK_LIBRARIES(timer winmm)
+ENDIF()
+
 # Set target properties
 SET_TARGET_PROPERTIES(timer PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}

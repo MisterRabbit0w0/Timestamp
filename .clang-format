@@ -22,3 +22,15 @@ PointerAlignment: Left
 
 # 访问修饰符（public/private）的缩进
 AccessModifierOffset: -4
+
+# 头文件排序规则
+SortIncludes: CaseSensitive
+IncludeCategories:
+  - Regex:           '^<windows\.h>'
+    Priority:        1
+  - Regex:           '^<mmsystem\.h>'
+    Priority:        2
+  - Regex:           '^<.*>'
+    Priority:        3
+  - Regex:           '^"(.*)"'
+    Priority:        4
