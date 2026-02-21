@@ -231,6 +231,11 @@ void HighResTimer::printStatistics(const ::utils::TimingStats& stats) const {
            << "Intervals 95th Percentile (us): " << stats.p95 << "\n"
            << "Intervals 99th Percentile (us): " << stats.p99 << "\n"
            << "========================================\n";
+
+    logger.fileOnly() << "\n========== Raw Interval Data (us) ==========\n";
+    for (std::size_t i = 0; i < intervals_.size(); ++i) {
+        logger.fileOnly() << i + 1 << ": " << intervals_[i] << "\n";
+    }
 }
 
 }  // namespace ts

@@ -55,6 +55,42 @@ public:
         return *this;
     }
 
+    /**
+     * @brief Proxy that writes only to the log file, not to console
+     */
+    class FileOnlyProxy {
+    public:
+        explicit FileOnlyProxy(std::ofstream& f, bool open)
+            : file_(f), open_(open) {}
+
+        template <typename T>
+        FileOnlyProxy& operator<<(const T& value) {
+            if (open_) file_ << value;
+            return *this;
+        }
+
+        FileOnlyProxy& operator<<(std::ostream& (*manip)(std::ostream&)) {
+            if (open_) manip(file_);
+            return *this;
+        }
+
+        FileOnlyProxy& operator<<(std::ios_base& (*manip)(std::ios_base&)) {
+            if (open_) manip(file_);
+            return *this;
+        }
+
+    private:
+        std::ofstream& file_;
+        bool open_;
+    };
+
+    /**
+     * @brief Get a proxy that writes only to the log file
+     */
+    FileOnlyProxy fileOnly() {
+        return FileOnlyProxy(file, logFileOpened && file.is_open());
+    }
+
 private:
     std::ofstream file;
 

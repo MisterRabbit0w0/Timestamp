@@ -92,6 +92,11 @@ void Timer::printStatistics(const ::utils::TimingStats& stats) const {
            << "Intervals 95th Percentile (ms): " << stats.p95 << "\n"
            << "Intervals 99th Percentile (ms): " << stats.p99 << "\n"
            << "========================================\n";
+
+    logger.fileOnly() << "\n========== Raw Interval Data (ms) ==========\n";
+    for (std::size_t i = 0; i < intervals_.size(); ++i) {
+        logger.fileOnly() << i + 1 << ": " << intervals_[i] << "\n";
+    }
 }
 
 }  // namespace ts
