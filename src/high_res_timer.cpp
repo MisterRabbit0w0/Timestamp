@@ -39,7 +39,7 @@ private:
 namespace ts {
 
 HighResTimer::HighResTimer(double intervalSec)
-    : BaseTimer(intervalSec, "us"), intervalSec_(intervalSec) {}
+    : BaseTimer(intervalSec, "us") {}
 
 std::chrono::steady_clock::time_point HighResTimer::now() const {
     return std::chrono::steady_clock::now();
