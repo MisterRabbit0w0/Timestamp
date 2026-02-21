@@ -12,7 +12,7 @@ public:
      * @brief open a file to write logs
      * @param folderPath The folder of the log file
      */
-    explicit Logger(const std::string& folderPath);
+    explicit Logger(const std::string& folderPath = "logs");
 
     /** @brief close the log file */
     ~Logger();
@@ -65,17 +65,20 @@ public:
 
         template <typename T>
         FileOnlyProxy& operator<<(const T& value) {
-            if (open_) file_ << value;
+            if (open_)
+                file_ << value;
             return *this;
         }
 
         FileOnlyProxy& operator<<(std::ostream& (*manip)(std::ostream&)) {
-            if (open_) manip(file_);
+            if (open_)
+                manip(file_);
             return *this;
         }
 
         FileOnlyProxy& operator<<(std::ios_base& (*manip)(std::ios_base&)) {
-            if (open_) manip(file_);
+            if (open_)
+                manip(file_);
             return *this;
         }
 

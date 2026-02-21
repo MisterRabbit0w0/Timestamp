@@ -15,6 +15,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${CMAKE_SOURCE_DIR})
 # Source files
 set(SOURCES
     src/main.cpp
+    src/base_timer.cpp
     src/timer.cpp
     src/high_res_timer.cpp
     src/utils.cpp

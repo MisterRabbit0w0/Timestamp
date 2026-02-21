@@ -11,7 +11,7 @@
 
 namespace logging {
 
-Logger::Logger(const std::string& folderPath = "logs") {
+Logger::Logger(const std::string& folderPath) {
     if (!checkFolderExists(folderPath)) {
         createFolder(folderPath);
     }

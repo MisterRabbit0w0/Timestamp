@@ -1,6 +1,5 @@
 #include "utils.hpp"
 
-#include <algorithm>
 #include <sstream>
 #include <stdexcept>
 

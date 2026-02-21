@@ -1,14 +1,12 @@
-#include <iomanip>
 #include <iostream>
+#include <memory>
 #include <stdexcept>
 
+#include "base_timer.hpp"
 #include "high_res_timer.hpp"
 #include "logger.hpp"
 #include "timer.hpp"
 
-/**
- * @brief Print usage information
- */
 void printUsage(const char* programName) {
     std::cerr
         << "Usage: " << programName << " <seconds>\n"
@@ -27,23 +25,18 @@ int main(int argc, char* argv[]) {
 
         double intervalSec = ::utils::parseInterval(argv[1]);
 
-        if (intervalSec < 0.001) {  // 1 ms threshold for high-resolution timer
-            ts::HighResTimer timer(intervalSec);
-            timer.run();
-
-            ::utils::TimingStats stats = timer.calculateStatistics();
-
-            logger << "interval = " << intervalSec << " s\n";
-            timer.printStatistics(stats);
+        std::unique_ptr<ts::BaseTimer> timer;
+        if (intervalSec < 0.001) {
+            timer = std::make_unique<ts::HighResTimer>(intervalSec);
         } else {
-            ts::Timer timer(intervalSec);
-            timer.run();
-
-            ::utils::TimingStats stats = timer.calculateStatistics();
-
-            logger << "interval = " << intervalSec << " s\n";
-            timer.printStatistics(stats);
+            timer = std::make_unique<ts::Timer>(intervalSec);
         }
+
+        timer->run();
+
+        auto stats = timer->calculateStatistics();
+        logger << "interval = " << intervalSec << " s\n";
+        timer->printStatistics(stats);
 
         return 0;
 
