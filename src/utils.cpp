@@ -1,6 +1,6 @@
 #include "utils.hpp"
 
-#include <iostream>
+#include <algorithm>
 #include <sstream>
 #include <stdexcept>
 
@@ -36,6 +36,13 @@ long long toMicroseconds(const std::chrono::steady_clock::time_point& tp) {
 
 double toMicroseconds(const std::chrono::steady_clock::duration& dur) {
     return std::chrono::duration<double, std::micro>(dur).count();
+}
+
+double calculatePercentile(const std::vector<double>& sortedData, double p) {
+    if (sortedData.empty()) return 0.0;
+    std::size_t index = static_cast<std::size_t>(p * sortedData.size());
+    if (index >= sortedData.size()) index = sortedData.size() - 1;
+    return sortedData[index];
 }
 
 }  // namespace utils

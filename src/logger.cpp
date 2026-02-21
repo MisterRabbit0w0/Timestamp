@@ -9,7 +9,7 @@
 #include <sstream>
 #include <stdexcept>
 
-namespace Logger {
+namespace logging {
 
 Logger::Logger(const std::string& folderPath = "logs") {
     if (!checkFolderExists(folderPath)) {
@@ -17,22 +17,19 @@ Logger::Logger(const std::string& folderPath = "logs") {
     }
 
     std::string filename = generateFilenameWithoutExtension();
-    std::string fullPath = folderPath + "/" + filename;
+    std::string fullPath = folderPath + "/" + filename + ".log";
 
-    if (checkFileExists(fullPath + ".log")) {
-        // throw std::runtime_error("Log file already exists: " + fullPath);
+    if (checkFileExists(fullPath)) {
         int i = 1;
 
-        while (checkFileExists(fullPath + "_" + std::to_string(i) + ".log")) {
+        while (checkFileExists(folderPath + "/" + filename + "_" +
+                               std::to_string(i) + ".log")) {
             ++i;
         }
 
-        std::string newFullPath = fullPath + "_" + std::to_string(i) + ".log";
-        createLogFile(newFullPath);
-        fullPath = newFullPath;
+        fullPath =
+            folderPath + "/" + filename + "_" + std::to_string(i) + ".log";
     }
-
-    createLogFile(fullPath);
 
     file.open(fullPath, std::ios::out);
     if (!file.is_open()) {
@@ -78,14 +75,6 @@ bool Logger::checkFileExists(const std::string& filePath) {
     return std::filesystem::exists(filePath);
 }
 
-void Logger::createLogFile(const std::string& filePath) {
-    std::ofstream ofs(filePath);
-    if (!ofs) {
-        throw std::runtime_error("Failed to create log file: " + filePath);
-    }
-    ofs.close();
-}
+}  // namespace logging
 
-}  // namespace Logger
-
-Logger::Logger logger;
+logging::Logger logger;

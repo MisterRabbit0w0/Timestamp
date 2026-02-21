@@ -20,15 +20,19 @@ Timer::Timer(double intervalSec)
 }
 
 void Timer::run(std::size_t iterations) {
+    intervals_.clear();
+    intervals_.reserve(iterations);
+
     lastTimePoint_ = std::chrono::system_clock::now();
 
-    std::cout << "Start Timestamp:" << utils::toMilliseconds(lastTimePoint_)
+    std::cout << "Start Timestamp: " << utils::toMilliseconds(lastTimePoint_)
               << "\n";
 
     auto nextHeartbeat =
         std::chrono::time_point_cast<std::chrono::nanoseconds>(lastTimePoint_);
 
-    auto awakeBeforeHeartbeat = std::chrono::nanoseconds(10000000);  // 10 ms
+    auto awakeBeforeHeartbeat =
+        std::min(std::chrono::nanoseconds(10000000), interval_ / 2);
 
     for (std::size_t i = 0; i < iterations; ++i) {
         nextHeartbeat += interval_;
@@ -63,23 +67,18 @@ void Timer::run(std::size_t iterations) {
     std::vector<double> sorted = intervals_;
     std::sort(sorted.begin(), sorted.end());
 
-    auto percentile = [&sorted](double p) -> double {
-        std::size_t index = static_cast<std::size_t>(p * sorted.size()) - 1;
-        return sorted[index];
-    };
-
-    stats.p50 = percentile(0.50);
-    stats.p75 = percentile(0.75);
-    stats.p90 = percentile(0.90);
-    stats.p95 = percentile(0.95);
-    stats.p99 = percentile(0.99);
+    stats.p50 = ::utils::calculatePercentile(sorted, 0.50);
+    stats.p75 = ::utils::calculatePercentile(sorted, 0.75);
+    stats.p90 = ::utils::calculatePercentile(sorted, 0.90);
+    stats.p95 = ::utils::calculatePercentile(sorted, 0.95);
+    stats.p99 = ::utils::calculatePercentile(sorted, 0.99);
 
     return stats;
 }
 
 void Timer::printTimestamp(const std::chrono::system_clock::time_point& tp,
                            double realInterval) {
-    std::cout << "Timestamp:" << ::utils::toMilliseconds(tp) << "\t"
+    std::cout << "Timestamp: " << ::utils::toMilliseconds(tp) << "\t"
               << "(real interval: " << realInterval << " ms)\n";
 }
 

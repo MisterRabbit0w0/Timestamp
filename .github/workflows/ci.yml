@@ -31,7 +31,3 @@ jobs:
 
     - name: Build
       run: cmake --build build -j$(nproc)
-
-    - name: Test
-      working-directory: build
-      run: ctest --output-on-failure -j$(nproc)

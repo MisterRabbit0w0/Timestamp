@@ -3,12 +3,9 @@
 #include <algorithm>
 #include <iomanip>
 #include <iostream>
-#include <mutex>
 #include <numeric>
-#include <queue>
 #include <sstream>
 #include <stdexcept>
-#include <thread>
 
 #ifdef _WIN32
 #ifndef WIN32_LEAN_AND_MEAN
@@ -106,10 +103,11 @@ void HighResTimer::run(std::size_t iterations) {
     // Initial output before starting the timed loop to avoid affecting the
     // first interval
     {
-        // use a special value
         std::lock_guard<std::mutex> lock(queueMutex_);
-        outputQueue_.push({::utils::toMicroseconds(lastTimePoint_), -1.0});
+        outputQueue_.push({OutputData::Type::Start,
+                           ::utils::toMicroseconds(lastTimePoint_), 0.0});
     }
+    queueCV_.notify_one();
 
     for (std::size_t i = 0; i < iterations; ++i) {
         nextHeartbeat += interval_;
@@ -168,20 +166,11 @@ void HighResTimer::run(std::size_t iterations) {
     std::vector<double> sorted = intervals_;
     std::sort(sorted.begin(), sorted.end());
 
-    auto percentile = [&sorted](double p) -> double {
-        std::size_t index = static_cast<std::size_t>(p * sorted.size());
-        if (index >= sorted.size())
-            index = sorted.size() - 1;
-        if (sorted.empty())
-            return 0.0;
-        return sorted[index];
-    };
-
-    stats.p50 = percentile(0.50);
-    stats.p75 = percentile(0.75);
-    stats.p90 = percentile(0.90);
-    stats.p95 = percentile(0.95);
-    stats.p99 = percentile(0.99);
+    stats.p50 = ::utils::calculatePercentile(sorted, 0.50);
+    stats.p75 = ::utils::calculatePercentile(sorted, 0.75);
+    stats.p90 = ::utils::calculatePercentile(sorted, 0.90);
+    stats.p95 = ::utils::calculatePercentile(sorted, 0.95);
+    stats.p99 = ::utils::calculatePercentile(sorted, 0.99);
 
     return stats;
 }
@@ -190,7 +179,8 @@ void HighResTimer::printTimestamp(long long timestampUs,
                                   double realIntervalUs) {
     {
         std::lock_guard<std::mutex> lock(queueMutex_);
-        outputQueue_.push({timestampUs, realIntervalUs});
+        outputQueue_.push(
+            {OutputData::Type::Interval, timestampUs, realIntervalUs});
     }
     queueCV_.notify_one();
 }
@@ -219,12 +209,12 @@ void HighResTimer::outputWorker() {
 
         // Print outside the lock
         if (hasData) {
-            if (data.realIntervalUs != -1.0) {
-                std::cout << "Timestamp (us):" << data.timestampUs << "\t"
+            if (data.type == OutputData::Type::Interval) {
+                std::cout << "Timestamp (us): " << data.timestampUs << "\t"
                           << "(real interval: " << data.realIntervalUs
                           << " us)\n";
             } else {
-                std::cout << "Start Timestamp (us):" << data.timestampUs
+                std::cout << "Start Timestamp (us): " << data.timestampUs
                           << "\n";
             }
         }

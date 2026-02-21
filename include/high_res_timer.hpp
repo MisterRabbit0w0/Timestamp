@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <condition_variable>
+#include <cstddef>
 #include <mutex>
 #include <queue>
 #include <string>
@@ -65,6 +66,8 @@ public:
 
 private:
     struct OutputData {
+        enum class Type { Start, Interval };
+        Type type;
         long long timestampUs;
         double realIntervalUs;
     };

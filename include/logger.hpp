@@ -4,7 +4,7 @@
 #include <iostream>
 #include <string>
 
-namespace Logger {
+namespace logging {
 
 class Logger {
 public:
@@ -67,10 +67,8 @@ private:
     void createFolder(const std::string& folderPath);
 
     bool checkFileExists(const std::string& filePath);
-
-    void createLogFile(const std::string& filePath);
 };
 
-}  // namespace Logger
+}  // namespace logging
 
-extern Logger::Logger logger;
+extern logging::Logger logger;

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <chrono>
+#include <cstddef>
+#include <vector>
 
 /**
  * @brief Utility namespace for common operations
@@ -18,6 +20,14 @@ struct TimingStats {
     double p95;
     double p99;
 };
+
+/**
+ * @brief Calculate a percentile value from sorted data
+ * @param sortedData Sorted vector of values
+ * @param p Percentile fraction (0.0 to 1.0)
+ * @return The percentile value
+ */
+double calculatePercentile(const std::vector<double>& sortedData, double p);
 
 /**
  * @brief Parse and validate interval argument
