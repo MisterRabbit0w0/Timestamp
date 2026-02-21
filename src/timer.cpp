@@ -1,7 +1,43 @@
 #include "timer.hpp"
 
 #include <chrono>
+#include <iostream>
 #include <thread>
+
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
+#include <windows.h>
+
+#include <mmsystem.h>
+
+namespace {
+
+class TimerResolutionGuard {
+public:
+    explicit TimerResolutionGuard(UINT period) : period_(period) {
+        timeBeginPeriod(period_);
+    }
+
+    ~TimerResolutionGuard() {
+        timeEndPeriod(period_);
+    }
+
+    TimerResolutionGuard(const TimerResolutionGuard&)            = delete;
+    TimerResolutionGuard& operator=(const TimerResolutionGuard&) = delete;
+
+private:
+    UINT period_;
+};
+
+}  // anonymous namespace
+
+#endif
 
 #include "utils.hpp"
 
@@ -12,6 +48,16 @@ Timer::Timer(double intervalSec) : BaseTimer(intervalSec, "ms") {}
 void Timer::run(std::size_t iterations) {
     intervals_.clear();
     intervals_.reserve(iterations);
+
+#ifdef _WIN32
+    TimerResolutionGuard timerGuard(1);
+    BOOL result =
+        SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
+    if (!result) {
+        std::cerr << "Warning: Failed to set thread priority. "
+                  << "Timing precision may be affected.\n";
+    }
+#endif
 
     startOutputThread();
 
@@ -45,6 +91,14 @@ void Timer::run(std::size_t iterations) {
     }
 
     stopOutputThreadAndJoin();
+
+#ifdef _WIN32
+    BOOL restoreResult =
+        SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_NORMAL);
+    if (!restoreResult) {
+        std::cerr << "Warning: Failed to restore thread priority.\n";
+    }
+#endif
 }
 
 }  // namespace ts

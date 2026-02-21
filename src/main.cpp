@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
         double intervalSec = ::utils::parseInterval(argv[1]);
 
         std::unique_ptr<ts::BaseTimer> timer;
-        if (intervalSec < 0.001) {
+        if (intervalSec < 0.002) {
             timer = std::make_unique<ts::HighResTimer>(intervalSec);
         } else {
             timer = std::make_unique<ts::Timer>(intervalSec);
